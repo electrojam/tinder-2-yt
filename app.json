@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "tinder-2-yt",
     "name": "tinder-2-yt",
     "slug": "tinder-2-yt",
     "version": "1.0.0",
@@ -18,9 +19,11 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.electrojam.tinder2yt",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.electrojam.tinder2yt",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -28,6 +31,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "83992120-6a38-43b1-874b-37429b9315a0"
+      }
     }
   }
 }
