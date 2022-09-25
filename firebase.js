@@ -2,6 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithCredential, signOut, onAuthStateChanged } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth/react-native';
+
 const firebaseConfig = {
   apiKey: "AIzaSyC73yye5vyOKuX6l_PbsUlPmaGSlmWUdKM",
   authDomain: "tinder-2-yt-99165.firebaseapp.com",
@@ -13,7 +16,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth();
+// const auth = getAuth();
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
 const db = getFirestore()
 
 export { auth, db, GoogleAuthProvider, signInWithCredential, signOut, onAuthStateChanged }

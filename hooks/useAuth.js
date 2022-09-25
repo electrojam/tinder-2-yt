@@ -18,35 +18,6 @@ const config = {
   }
 
 export const AuthProvider = ({ children }) => {
-//   const [request, response, promptAsync] = Google.useAuthRequest(config)
-//   const [error, setError] = useState()
-
-//   const signInWithGoogle = async () => {
-//     console.log("se dio click en botón LogIn");
-//      promptAsync({ showInRevents: true });
-//     if (response?.type === "success") {
-//       console.log("access exitoso********************")
-//       const { idToken, accesssToken } = response?.authentication
-//       const credential = GoogleAuthProvider.credential(idToken, accesssToken)
-//       signInWithCredential(auth, credential)
-//     } else {
-//       setError(response?.error);
-//       }
-
-//   }
-
-//   return (
-//     <AuthContext.Provider
-//       value={{
-//         user: null,
-//         signInWithGoogle,
-//       }}
-//     >
-//       { children }
-//     </AuthContext.Provider>
-    
-//   )
-// }
 
 const [request, response, promptAsync] = Google.useAuthRequest(config);
 const [error, setError] = useState();
