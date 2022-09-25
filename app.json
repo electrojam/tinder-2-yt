@@ -19,11 +19,11 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.electrojam.tinder2yt",
+      "bundleIdentifier": "host.exp.exponent",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.electrojam.tinder2yt",
+      "package": "host.exp.exponent",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

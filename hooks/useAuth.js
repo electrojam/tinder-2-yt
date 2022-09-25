@@ -1,53 +1,110 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { GoogleAuthProvider, auth, signInWithCredential } from "../firebase";
+import { GoogleAuthProvider, auth, signInWithCredential, signOut, onAuthStateChanged } from "../firebase";
 import { getAuth } from 'firebase/auth';
+import { connectFirestoreEmulator } from 'firebase/firestore';
 
 const AuthContext = createContext({})
 
 WebBrowser.maybeCompleteAuthSession();
 
 const config = {
-    iosClientId: '880121436414-jqecr8nt75geo7d2oa0g1nn2dpap49t7.apps.googleusercontent.com',
-    androidClientId: '880121436414-beg9odk1pq92fvr5f5qbk18rauiimjpf.apps.googleusercontent.com',
-    expoClientId: '880121436414-vgk7if3aoijokehtu3iv26b159s6qvpt.apps.googleusercontent.com',
+    iosClientId: '726112814589-a5beg1j05d3cau03sssdv880revjmqk5.apps.googleusercontent.com',
+    androidClientId: '726112814589-1g36gg9dp9586ru3ocvth6emm5lm2poc.apps.googleusercontent.com',
+    expoClientId: '726112814589-gf9h04ol7tipcoigjracmt5bi6kih16d.apps.googleusercontent.com',
     scopes: ["profile", "email"],
     permissions: ["public_profile", "email", "gender", "location"],
   }
 
 export const AuthProvider = ({ children }) => {
-  const [request, response, promptAsync] = Google.useAuthRequest(config)
-  const [error, setError] = useState()
+//   const [request, response, promptAsync] = Google.useAuthRequest(config)
+//   const [error, setError] = useState()
 
-  // useEffect(() => {
-  //   if (response?.type === 'success') {
-  //     const { idToken, accessToken } = response?.authentication;
-  //     const credential = GoogleAuthProvider.credential(idToken, accessToken);
-  //     signInWithCredential(auth, credential);
-  //   } else {
-  //       setError(response?.error)
-  //   }
+//   const signInWithGoogle = async () => {
+//     console.log("se dio click en botón LogIn");
+//      promptAsync({ showInRevents: true });
+//     if (response?.type === "success") {
+//       console.log("access exitoso********************")
+//       const { idToken, accesssToken } = response?.authentication
+//       const credential = GoogleAuthProvider.credential(idToken, accesssToken)
+//       signInWithCredential(auth, credential)
+//     } else {
+//       setError(response?.error);
+//       }
 
-  // }, [response]);
+//   }
 
-  const signInWithGoogle = async () => {
-    console.log("se dio click en botón LogIn");
-    promptAsync({ showInRevents: true });
+//   return (
+//     <AuthContext.Provider
+//       value={{
+//         user: null,
+//         signInWithGoogle,
+//       }}
+//     >
+//       { children }
+//     </AuthContext.Provider>
+    
+//   )
+// }
+
+const [request, response, promptAsync] = Google.useAuthRequest(config);
+const [error, setError] = useState();
+const [user, setUser] = useState();
+const [loadingInitial, setLoadingInitial] = useState(true);
+const [loading, setLoading] = useState(false);
+
+useEffect(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setUser(user);
+    } else {
+      setUser(null);
+    }
+
+    setLoadingInitial(false);
+  });
+}, []);
+
+useEffect(() => {
+  if (response?.type === "success") {
+    const { idToken, accessToken } = response?.authentication;
+    const credential = GoogleAuthProvider.credential(idToken, accessToken);
+    signInWithCredential(auth, credential);
+  } else {
+    setError(response?.error);
   }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user: null,
-        signInWithGoogle,
-      }}
-    >
-      { children }
-    </AuthContext.Provider>
-    
-  )
-}
+  setLoading(false);
+}, [response]);
+
+const logout = () => {
+  setLoading(true);
+  signOut(auth)
+    .catch((error) => setError(error))
+    .finally(() => setLoading(false));
+};
+
+const memoedValue = useMemo(
+  () => ({
+    user,
+    loading,
+    error,
+    logout,
+    signInWithGoogle: () => {
+      setLoading(true);
+      promptAsync({ showInRevents: true });
+    },
+  }),
+  [user, loading, error]
+);
+
+return (
+  <AuthContext.Provider value={memoedValue}>
+    {!loadingInitial && children}
+  </AuthContext.Provider>
+);
+};
 
 export default function useAuth() {
   return useContext(AuthContext)
