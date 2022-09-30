@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { View, Text, Button, TouchableOpacity, Image, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import useAuth from '../hooks/useAuth'
@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from 'twrnc'
 import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons"
 import Swiper from "react-native-deck-swiper"
-import { doc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, getDocs, onSnapshot, query, setDoc, where } from 'firebase/firestore'
 import { db } from '../firebase'
 
 const DUMMY_DATA = [
@@ -42,16 +42,56 @@ const HomeScreen = () => {
   const swipeRef = useRef(null)
   const [profiles, setProfiles] = useState([])
 
-  useLayoutEffect(
-    () => 
+  useLayoutEffect(() => {
       onSnapshot(doc(db, "users", user.uid), (snapshot) => {
         if (!snapshot.exists()) {
           navigation.navigate("Modal") 
         }
-      }),
-      []
-    )
+      })
+    }, [])
   
+  useEffect(() => {
+    let unsub
+    const fetchCards = async () => {
+      const passes = getDocs(collection(db, "users", user.uid, "passes")).then(
+        (snapshot) => snapshot.docs.map((doc) => doc.id)
+      )      
+ 
+      const passedUserIds = passes.length > 0 ? passes : ['test']
+
+      unsub = onSnapshot(
+        query(
+          collection(db, "users"), 
+          where("id", "not-in", [...passedUserIds])
+        ), 
+      (snapshot) => {
+        setProfiles(
+          snapshot.docs
+            .filter((doc) => doc.id !== user.uid)
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(), 
+          }))
+        )
+      })
+    }
+
+    fetchCards() 
+    return unsub
+  }, [])
+  
+  const swipeLeft = (cardIndex) => {
+    if (!profiles[cardIndex]) return
+
+    const userSwiped = profiles[cardIndex]
+    console.log(`Has deslizado en PASAR a ${userSwiped.displayName}`)
+    setDoc(doc(db, "users", user.uid, "passes", userSwiped.id), userSwiped)
+  }
+
+  const swipeRight = async() => {
+    
+  }
+
   return (
     <SafeAreaView style={tw`flex-1`}>
       <View style={tw`flex-row items-center justify-between px-5 pb-6`}>
@@ -82,11 +122,13 @@ const HomeScreen = () => {
           cardIndex={0}
           animateCardOpacity
           verticalSwipe={false}
-          onSwipedLeft={() => {
+          onSwipedLeft={(cardIndex) => {
             console.log('Swipe Pass')
+            swipeLeft(cardIndex)
           }}
-          onSwipedRight={() => {
+          onSwipedRight={(cardIndex) => {
             console.log("Swipe Match")
+            swipeRight(cardIndex)
           }}
           backgroundColor={"#4FD0E9"}
           overlayLabels={{
@@ -112,8 +154,15 @@ const HomeScreen = () => {
           renderCard={(card) => card ? (
             <View key={card.id} style={tw`relative bg-white h-3/4 rounded-xl`}>
               <Image 
-                style={tw`absolute top-0 h-full w-full rounded-xl`} 
-                source={{ uri: card.photoURL }}
+                // style={tw`absolute top-0 h-full w-full rounded-xl`} 
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  borderRadius: 15,
+                  position: "absolute",
+                  top: 0,
+                }}
+                source={{ uri: card?.photoURL }}
               />
               
               <View 
@@ -124,7 +173,7 @@ const HomeScreen = () => {
                 ]}
               >
                 <View>
-                  <Text style={tw`text-xl font-bold`}>{card.firstName} {card.lastName}</Text>
+                  <Text style={tw`text-xl font-bold`}>{card.displayName}</Text>
                   <Text>{card.job}</Text>
                 </View>
                 <Text style={tw`text-2xl font-bold`}>{card.age}</Text>
