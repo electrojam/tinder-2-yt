@@ -52,17 +52,23 @@ const HomeScreen = () => {
   
   useEffect(() => {
     let unsub
+
     const fetchCards = async () => {
-      const passes = getDocs(collection(db, "users", user.uid, "passes")).then(
+      const passes = await getDocs(collection(db, "users", user.uid, "passes")).then(
+        (snapshot) => snapshot.docs.map((doc) => doc.id)
+      )      
+
+      const swipes = await getDocs(collection(db, "users", user.uid, "swipes")).then(
         (snapshot) => snapshot.docs.map((doc) => doc.id)
       )      
  
       const passedUserIds = passes.length > 0 ? passes : ['test']
+      const swipedUserIds = swipes.length > 0 ? swipes : ['test']
 
       unsub = onSnapshot(
         query(
           collection(db, "users"), 
-          where("id", "not-in", [...passedUserIds])
+          where("id", "not-in", [...passedUserIds, ...swipedUserIds])
         ), 
       (snapshot) => {
         setProfiles(
@@ -78,7 +84,7 @@ const HomeScreen = () => {
 
     fetchCards() 
     return unsub
-  }, [])
+  }, [db])
   
   const swipeLeft = (cardIndex) => {
     if (!profiles[cardIndex]) return
@@ -88,8 +94,12 @@ const HomeScreen = () => {
     setDoc(doc(db, "users", user.uid, "passes", userSwiped.id), userSwiped)
   }
 
-  const swipeRight = async() => {
-    
+  const swipeRight = (cardIndex) => {
+    if (!profiles[cardIndex]) return
+
+    const userSwiped = profiles[cardIndex]
+    console.log(`Has delizado en Sí a ${userSwiped.displayName} (${userSwiped.job})`)
+    setDoc(doc(db, "users", user.uid, "swipes", userSwiped.id), userSwiped)
   }
 
   return (
