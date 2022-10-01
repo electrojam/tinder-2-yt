@@ -6,8 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import tw from 'twrnc'
 import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons"
 import Swiper from "react-native-deck-swiper"
-import { collection, doc, getDocs, onSnapshot, query, setDoc, where } from 'firebase/firestore'
+import { collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { db } from '../firebase'
+import generateId from '../lib/generateId'
 
 const DUMMY_DATA = [
   {
@@ -86,7 +87,7 @@ const HomeScreen = () => {
     return unsub
   }, [db])
   
-  const swipeLeft = (cardIndex) => {
+  const swipeLeft = async (cardIndex) => {
     if (!profiles[cardIndex]) return
 
     const userSwiped = profiles[cardIndex]
@@ -94,12 +95,48 @@ const HomeScreen = () => {
     setDoc(doc(db, "users", user.uid, "passes", userSwiped.id), userSwiped)
   }
 
-  const swipeRight = (cardIndex) => {
+  const swipeRight = async (cardIndex) => {
     if (!profiles[cardIndex]) return
 
     const userSwiped = profiles[cardIndex]
-    console.log(`Has delizado en Sí a ${userSwiped.displayName} (${userSwiped.job})`)
-    setDoc(doc(db, "users", user.uid, "swipes", userSwiped.id), userSwiped)
+
+    const loggedInProfile = await (
+      await getDoc(doc(db, "users", user.uid))
+    ).data()
+
+    // Check if the user swiped on you...
+    getDoc(doc(db, "users", userSwiped.id, "swipes", user.uid)).then(
+      (documentSnapshot) => {
+        if (documentSnapshot.exists()) {
+          // user has matched with you before you matched with him...
+          // create a MATCH!
+          console.log(`Has hecho Match con ${userSwiped.displayName}`)
+
+          setDoc(doc(db,"users", user.uid, "swipes", userSwiped.id), userSwiped)
+
+          // CREATE A MATCH!!!! 
+          setDoc(doc(db, "matches", generateId(user.uid, userSwiped.id)), {
+            users: {
+              [user.uid]: loggedInProfile,
+              [userSwiped.id]: userSwiped,
+            },
+            usersMatched: [user.uid, userSwiped.id],
+            timestamp: serverTimestamp(),
+          })
+
+          navigation.navigate("Match", {
+            loggedInProfile,
+            userSwiped,
+          })
+
+        } else {
+          // User has swiped as first interaction between the two or didnt get swiped´on...
+          console.log(`Has delizado en Sí a ${userSwiped.displayName} (${userSwiped.job})`)
+          setDoc(doc(db, "users", user.uid, "swipes", userSwiped.id), userSwiped)
+        }
+      }
+    )
+
   }
 
   return (
