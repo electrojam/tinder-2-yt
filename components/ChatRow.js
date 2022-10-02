@@ -30,6 +30,10 @@ const ChatRow = ({ matchDetails }) => {
         style={tw`rounded-full h-16 w-16 mr-4`}
         source={{ uri: matchedUserInfo?.photoURL }}
       />
+      <View>
+        <Text style={tw`font-semibold text-lg`}>{matchedUserInfo?.displayName}</Text>
+        <Text>Dí ¡Hola!</Text>
+      </View>
     </TouchableOpacity>
   )
 }
