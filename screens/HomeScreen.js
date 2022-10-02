@@ -91,7 +91,6 @@ const HomeScreen = () => {
     if (!profiles[cardIndex]) return
 
     const userSwiped = profiles[cardIndex]
-    console.log(`Has deslizado en PASAR a ${userSwiped.displayName}`)
     setDoc(doc(db, "users", user.uid, "passes", userSwiped.id), userSwiped)
   }
 
@@ -110,7 +109,6 @@ const HomeScreen = () => {
         if (documentSnapshot.exists()) {
           // user has matched with you before you matched with him...
           // create a MATCH!
-          console.log(`Has hecho Match con ${userSwiped.displayName}`)
 
           setDoc(doc(db,"users", user.uid, "swipes", userSwiped.id), userSwiped)
 
@@ -131,7 +129,6 @@ const HomeScreen = () => {
 
         } else {
           // User has swiped as first interaction between the two or didnt get swiped´on...
-          console.log(`Has delizado en Sí a ${userSwiped.displayName} (${userSwiped.job})`)
           setDoc(doc(db, "users", user.uid, "swipes", userSwiped.id), userSwiped)
         }
       }
@@ -170,11 +167,9 @@ const HomeScreen = () => {
           animateCardOpacity
           verticalSwipe={false}
           onSwipedLeft={(cardIndex) => {
-            console.log('Swipe Pass')
             swipeLeft(cardIndex)
           }}
           onSwipedRight={(cardIndex) => {
-            console.log("Swipe Match")
             swipeRight(cardIndex)
           }}
           backgroundColor={"#4FD0E9"}

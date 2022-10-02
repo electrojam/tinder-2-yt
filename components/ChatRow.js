@@ -4,15 +4,27 @@ import { useNavigation } from '@react-navigation/native'
 import useAuth from '../hooks/useAuth'
 import getMatchedUserInfo from '../lib/getMatchedUserInfo'
 import tw from 'twrnc'
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const ChatRow = ({ matchDetails }) => {
   const navigation = useNavigation()
   const { user } = useAuth()
   const [matchedUserInfo, setMatchedUserInfo] = useState(null)
+  const [lastMessage, setLastMessage] = useState('')
 
   useEffect(() => {
     setMatchedUserInfo(getMatchedUserInfo(matchDetails.users, user.uid))
   }, [matchDetails, user])
+  
+  useEffect(() => {
+    onSnapshot(
+      query(
+        collection(db, "matches", matchDetails.id, "messages"), 
+        orderBy("timestamp", "desc")
+      ), snapshot => setLastMessage(snapshot.docs[0]?.data()?.message)
+    )
+  }, [matchDetails, db])
   
 
   return (
@@ -31,8 +43,8 @@ const ChatRow = ({ matchDetails }) => {
         source={{ uri: matchedUserInfo?.photoURL }}
       />
       <View>
-        <Text style={tw`font-semibold text-lg`}>{matchedUserInfo?.displayName}</Text>
-        <Text>Dí ¡Hola!</Text>
+        <Text style={tw`text-lg`}>{matchedUserInfo?.displayName}</Text>
+        <Text>{lastMessage || "Dí ¡Hola!"}</Text>
       </View>
     </TouchableOpacity>
   )
